@@ -1,0 +1,154 @@
+{
+  "name": "postgresql_database_connection_pool_exhaustion_and_optimization",
+  "description": "This incident type refers to the situation where a PostgreSQL application experiences database connection pool exhaustion, leading to errors. This can happen when the number of database connections requested exceeds the maximum number of connections allowed in the pool. To prevent this issue, it is important to optimize database connections by properly configuring the connection pool settings and monitoring the usage of connections. This can help ensure that the application has sufficient resources to handle database requests without experiencing pool exhaustion.",
+  "params": [
+    {
+      "name": "PATH_TO_CONFIG_FILE",
+      "value": ""
+    },
+    {
+      "name": "NEW_MAXIMUM_CONNECTION_LIMIT",
+      "value": ""
+    },
+    {
+      "name": "USERNAME",
+      "value": ""
+    },
+    {
+      "name": "DATABASE_HOST",
+      "value": ""
+    },
+    {
+      "name": "DATABASE_PORT",
+      "value": ""
+    },
+    {
+      "name": "MAXIMUM_NUMBER_OF_CONNECTIONS",
+      "value": ""
+    },
+    {
+      "name": "DATABASE_NAME",
+      "value": ""
+    },
+    {
+      "name": "APPLICATION_NAME",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## PostgreSQL database connection pool exhaustion and optimization\nThis incident type refers to the situation where a PostgreSQL application experiences database connection pool exhaustion, leading to errors. This can happen when the number of database connections requested exceeds the maximum number of connections allowed in the pool. To prevent this issue, it is important to optimize database connections by properly configuring the connection pool settings and monitoring the usage of connections. This can help ensure that the application has sufficient resources to handle database requests without experiencing pool exhaustion."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the current size of the PostgreSQL connection pool"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sudo -u postgres psql -c \"SELECT COUNT(*) FROM pg_stat_activity WHERE datname = '${DATABASE_NAME}' AND usename = '${USERNAME}'\"`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Identify the maximum number of PostgreSQL connections allowed in the connection pool"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sudo -u postgres psql -c \"SHOW max_connections\"`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the current number of open file descriptors on the system"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `ulimit -n`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Identify the number of connections allowed per client IP address"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sudo -u postgres psql -c \"SHOW max_connections_per_ip\"`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the current number of idle connections in the PostgreSQL pool"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sudo -u postgres psql -c \"SELECT COUNT(*) FROM pg_stat_activity WHERE datname = '${DATABASE_NAME}' AND usename = '${USERNAME}' AND state = 'idle'\"`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the current number of active connections in the PostgreSQL pool"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `sudo -u postgres psql -c \"SELECT COUNT(*) FROM pg_stat_activity WHERE datname = '${DATABASE_NAME}' AND usename = '${USERNAME}' AND state = 'active'\"`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## The maximum number of connections allowed in the pool is set too low, leading to contention for available connections and eventual pool exhaustion."
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_check_db_connections($USERNAME, $DATABASE_HOST, $DATABASE_PORT, $MAXIMUM_NUMBER_OF_CONNECTIONS, $DATABASE_NAME)"
+    },
+    {
+      "name": "cell_16",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Increase the maximum number of connections allowed in the connection pool. This can be done by editing the configuration file of the application and adjusting the connection pool settings."
+    },
+    {
+      "name": "cell_17",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_update_connection_limit_script($PATH_TO_CONFIG_FILE, $NEW_MAXIMUM_CONNECTION_LIMIT, $APPLICATION_NAME)"
+    }
+  ]
+}
